@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-
+import RiderDashboard from "./components/pages/RiderDashboard";
 import Hero from './components/Hero';
 import StatsSection from './components/Stats';
 import FeaturesSection from './components/FeaturesSection';
@@ -55,6 +55,7 @@ export default function App() {
                 </div>
               } 
             />
+            <Route path="/rider" element={<RiderDashboard />} />
             <Route 
               path="/order-details" 
               element={
@@ -63,7 +64,7 @@ export default function App() {
                 </div>
               } 
             />
-
+    
             {/* Track Delivery Page */}
             <Route 
               path="/track-delivery" 
@@ -74,6 +75,7 @@ export default function App() {
               } 
             />
           </Routes>
+          
         </main>
 
         {/* Footer */}
