@@ -16,7 +16,7 @@ export default function OrdersPage() {
       paymentMethod: "CASH",
       route: "Mardan → Timergara",
       status: "IN TRANSIT",
-      date: "Oct 24, 2024",
+      date: "2024-10-24",
     },
     {
       id: "DL002",
@@ -31,7 +31,7 @@ export default function OrdersPage() {
       paymentMethod: "EASYPAISA",
       route: "Mardan → Dir",
       status: "DELIVERED",
-      date: "Oct 24, 2024",
+      date: "2024-10-24",
     },
     {
       id: "DL003",
@@ -46,7 +46,7 @@ export default function OrdersPage() {
       paymentMethod: "JAZZCASH",
       route: "Swat → Mardan",
       status: "PENDING",
-      date: "Oct 24, 2024",
+      date: "2024-10-24",
     },
     {
       id: "DL004",
@@ -61,7 +61,7 @@ export default function OrdersPage() {
       paymentMethod: "CASH",
       route: "Peshawar → Mardan",
       status: "DELIVERED",
-      date: "Oct 24, 2024",
+      date: "2024-10-24",
     },
   ]);
   const [modalTab, setModalTab] = useState("view"); // 'view' | 'edit' | 'assign'
@@ -70,6 +70,7 @@ export default function OrdersPage() {
   const [selectedRider, setSelectedRider] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [dateFilter, setDateFilter] = useState("");
   const [activeModal, setActiveModal] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -86,15 +87,20 @@ export default function OrdersPage() {
 
   // Filtered orders logic
   const filteredOrders = orders.filter((order) => {
+    // Search by Order ID, Customer Name, or Rider Name
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.rider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.deliveryAddress.toLowerCase().includes(searchQuery.toLowerCase());
+      order.rider.toLowerCase().includes(searchQuery.toLowerCase());
 
+    // Filter by Status
     const matchesStatus =
       statusFilter === "ALL" || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
+
+    // Filter by Date
+    const matchesDate = dateFilter === "" || order.date === dateFilter;
+
+    return matchesSearch && matchesStatus && matchesDate;
   });
 
   const handleCreateOrder = () => {
@@ -134,11 +140,7 @@ export default function OrdersPage() {
       paymentMethod: createForm.paymentMethod,
       route: `${createForm.pickupAddress} → ${createForm.deliveryAddress}`,
       status: "PENDING",
-      date: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
+      date: new Date().toISOString().split("T")[0],
     };
 
     setOrders((prevOrders) => [...prevOrders, newOrder]);
@@ -372,7 +374,12 @@ export default function OrdersPage() {
               <option value="PENDING">Pending</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
-
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="text-xs font-semibold bg-gray-50 border border-gray-200 text-gray-700 px-3 py-2 rounded-xl focus:outline-indigo-500"
+            />
             <button
               onClick={() => alert("Exporting manifest to CSV...")}
               className="text-xs font-semibold bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-700 px-3.5 py-2 rounded-xl transition-colors flex items-center gap-1.5"

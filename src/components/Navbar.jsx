@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import screenImg from './../assets/screen.png';
-
+import NotificationDropdown from "./NotificationDropdown";
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -63,37 +63,73 @@ const Navbar = () => {
                 </div>
               </div>
             </div>
-
+            
             {/* Right side controls */}
-            <div className="absolute inset-y-0 right-0 flex items-center gap-2 sm:gap-3 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
-              <div className="hidden md:flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold shadow-xs">
-                <span className="size-2 rounded-full bg-emerald-500"></span>
-                HUB ONLINE
-              </div>
+           {/* Right side controls */}
+<div className="absolute inset-y-0 right-0 flex items-center gap-2 sm:gap-3 pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
 
-              {/* User Dropdown */}
-              <div className="relative ml-1">
-                <button 
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-                >
-                  <div className="size-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium text-sm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                    </svg>
-                  </div>
-                </button>
+  {/* Hub Status */}
+  <div className="hidden md:flex items-center gap-2 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-full text-xs font-semibold shadow-xs">
+    <span className="size-2 rounded-full bg-emerald-500"></span>
+    HUB ONLINE
+  </div>
 
-                {dropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 py-1 z-50">
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your profile</a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
-                    <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sign out</a>
-                  </div>
-                )}
-              </div>
+  {/* Notifications */}
+  <NotificationDropdown />
 
-            </div>
+  {/* User Dropdown */}
+  <div className="relative ml-1">
+    <button 
+      onClick={() => setDropdownOpen(!dropdownOpen)}
+      className="relative flex rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+    >
+      <div className="size-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-medium text-sm">
+        <svg 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="1.5" 
+          className="size-5"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            d="M15.75 6a3.75 3.75 0 1 1-7.5 0 
+               3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 
+               0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 
+               0-5.216-.584-7.499-1.632Z"
+          />
+        </svg>
+      </div>
+    </button>
+
+    {dropdownOpen && (
+      <div className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 py-1 z-50">
+        <a 
+          href="#" 
+          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Your profile
+        </a>
+
+        <a 
+          href="#" 
+          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Settings
+        </a>
+
+        <a 
+          href="#" 
+          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        >
+          Sign out
+        </a>
+      </div>
+    )}
+  </div>
+
+</div>
           </div>
         </div>
 
