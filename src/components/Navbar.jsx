@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import screenImg from './../assets/screen.png';
 import NotificationDropdown from "./NotificationDropdown";
+import useNotifications from "../hooks/useNotifications";
+
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
+  const {
+  notifications,
+  loading: notificationsLoading,
+  error: notificationsError,
+} = useNotifications();
   // Helper function for clean styling based on active state
   const navLinkStyle = ({ isActive }) => 
     isActive 
@@ -75,7 +81,11 @@ const Navbar = () => {
   </div>
 
   {/* Notifications */}
-  <NotificationDropdown />
+ <NotificationDropdown
+  notifications={notifications}
+  loading={notificationsLoading}
+  error={notificationsError}
+/>
 
   {/* User Dropdown */}
   <div className="relative ml-1">

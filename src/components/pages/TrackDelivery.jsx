@@ -1,12 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   GoogleMap,
   Marker,
   DirectionsRenderer,
   useJsApiLoader,
 } from "@react-google-maps/api";
+import { getDeliveries } from "../../services/deliveryService";
+import { useAppContext } from "../../context/AppContext";
 
 export default function TrackDeliveryPage() {
+  const {
+    activeDelivery,
+    orders,
+    selectActiveDelivery,
+  } = useAppContext();
+
+  // 1. Tracking steps
+  const trackingSteps = [
+    {
+      status: "ASSIGNED",
+      label: "Rider Assigned",
+    },
+    {
+      status: "ACCEPTED",
+      label: "Accepted",
+    },
+    {
+      status: "PICKED UP",
+      label: "Picked Up",
+    },
+    {
+      status: "IN TRANSIT",
+      label: "In Transit",
+    },
+    {
+      status: "DELIVERED",
+      label: "Delivered",
+    },
+  ];
+
+  // 2. Current step
+  const currentStepIndex = trackingSteps.findIndex(
+    (step) => step.status === activeDelivery?.status
+  );
+
+  // 3. States
+  const [trackingNumber, setTrackingNumber] = useState("");
+  const [searched, setSearched] = useState(false);
+  const [directions, setDirections] = useState(null);
+  const [deliveries, setDeliveries] = useState([]);
+  const [shipment, setShipment] = useState(null);
+
+  // 4. Google Maps
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
@@ -31,168 +76,83 @@ export default function TrackDeliveryPage() {
     lng: 71.9333,
   };
 
-  const [trackingNumber, setTrackingNumber] = useState("TRK-9842-NW");
-  const [searched, setSearched] = useState(true);
-  const [directions, setDirections] = useState(null);
+  // 5. Fetch deliveries
+  useEffect(() => {
+    const fetchDeliveries = async () => {
+      try {
+        const data = await getDeliveries();
 
-  const [shipment, setShipment] = useState({
-    trackingId: "TRK-9842-NW",
-    orderId: "DL001",
-    origin: "Mardan Central Hub",
-    destination: "Timergara Main Bazaar",
-    status: "IN TRANSIT",
-    rider: "Hamza Malik (Motorbike Unit #07)",
-    phone: "+92 300 9876543",
-    eta: "42 mins remaining",
-    speed: "32 km/h",
-    progressSteps: [
-      {
-        title: "Package Picked Up",
-        location: "Mardan Hub",
-        time: "10:15 AM",
-        completed: true,
-      },
-      {
-        title: "Departed Sorting Facility",
-        location: "Node 4 Corridor",
-        time: "11:00 AM",
-        completed: true,
-      },
-      {
-        title: "Cross-County Transit",
-        location: "Northern Sector Route",
-        time: "11:30 AM",
-        completed: true,
-      },
-      {
-        title: "Out for Final Delivery",
-        location: "Timergara Zone",
-        time: "Expected ~12:15 PM",
-        completed: false,
-      },
-      {
-        title: "Delivered",
-        location: "Destination Address",
-        time: "Pending",
-        completed: false,
-      },
-    ],
-  });
+        console.log("Deliveries from Mockaroo:", data);
 
-  const calculateRoute = () => {
-    if (!window.google) return;
+        setDeliveries(data);
+      } catch (error) {
+        console.error("Failed to fetch deliveries:", error);
+      }
+    };
 
-    const directionsService = new window.google.maps.DirectionsService();
+    fetchDeliveries();
+  }, []);
 
-    directionsService.route(
-      {
-        origin: pickupLocation,
-        destination: deliveryLocation,
-        waypoints: [
-          {
-            location: riderLocation,
-            stopover: true,
-          },
-        ],
-        travelMode: window.google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === "OK") {
-          setDirections(result);
-        } else {
-          console.error("Directions request failed:", status);
-        }
-      },
-    );
-  };
-
+  // 6. Tracking search
   const handleTrackSubmit = (e) => {
     e.preventDefault();
-    setSearched(true);
-    if (trackingNumber.toUpperCase() === "TRK-9842-NW") {
-      setShipment({
-        trackingId: "TRK-9842-NW",
-        orderId: "DL001",
-        origin: "Mardan Central Hub",
-        destination: "Timergara Main Bazaar",
-        status: "IN TRANSIT",
-        rider: "Hamza Malik (Motorbike Unit #07)",
-        phone: "+92 300 9876543",
-        eta: "42 mins remaining",
-        speed: "32 km/h",
-        progressSteps: [
-          {
-            title: "Package Picked Up",
-            location: "Mardan Hub",
-            time: "10:15 AM",
-            completed: true,
-          },
-          {
-            title: "Departed Sorting Facility",
-            location: "Node 4 Corridor",
-            time: "11:00 AM",
-            completed: true,
-          },
-          {
-            title: "Cross-County Transit",
-            location: "Northern Sector Route",
-            time: "11:30 AM",
-            completed: true,
-          },
-          {
-            title: "Out for Final Delivery",
-            location: "Timergara Zone",
-            time: "Expected ~12:15 PM",
-            completed: false,
-          },
-          {
-            title: "Delivered",
-            location: "Destination Address",
-            time: "Pending",
-            completed: false,
-          },
-        ],
-      });
-    } else {
-      setShipment({
-        trackingId: trackingNumber.toUpperCase(),
-        orderId: "DL-CUSTOM",
-        origin: "Peshawar Regional Depot",
-        destination: "Swat Local Terminal",
-        status: "OUT FOR DELIVERY",
-        rider: "Billal Khan (Unit #03)",
-        phone: "+92 301 1234567",
-        eta: "15 mins remaining",
-        speed: "28 km/h",
-        progressSteps: [
-          {
-            title: "Package Picked Up",
-            location: "Peshawar Depot",
-            time: "08:30 AM",
-            completed: true,
-          },
-          {
-            title: "In Transit",
-            location: "Malakand Highway",
-            time: "09:45 AM",
-            completed: true,
-          },
-          {
-            title: "Out for Final Delivery",
-            location: "Swat Terminal",
-            time: "10:30 AM",
-            completed: true,
-          },
-          {
-            title: "Delivered",
-            location: "Destination Address",
-            time: "Pending",
-            completed: false,
-          },
-        ],
-      });
+
+    const searchedTrackingId =
+      trackingNumber.trim().toUpperCase();
+
+    const foundDelivery = deliveries.find(
+      (delivery) =>
+        delivery.trackingId?.trim().toUpperCase() ===
+        searchedTrackingId
+    );
+
+    console.log("Found delivery:", foundDelivery);
+
+    if (!foundDelivery) {
+      setShipment(null);
+      setSearched(false);
+      alert("Tracking number not found");
+      return;
     }
+
+    setShipment(foundDelivery);
+    setSearched(true);
+    selectActiveDelivery(foundDelivery);
   };
+
+const calculateRoute = () => {
+  if (!window.google) {
+    console.error("Google Maps is not loaded yet.");
+    return;
+  }
+
+  const directionsService =
+    new window.google.maps.DirectionsService();
+
+  directionsService.route(
+    {
+      origin: pickupLocation,
+      destination: deliveryLocation,
+      waypoints: [
+        {
+          location: riderLocation,
+          stopover: true,
+        },
+      ],
+      travelMode: window.google.maps.TravelMode.DRIVING,
+    },
+    (result, status) => {
+      if (status === "OK") {
+        setDirections(result);
+      } else {
+        console.error(
+          "Directions request failed:",
+          status
+        );
+      }
+    }
+  );
+};
 
   return (
     <div className="min-h-screen bg-indigo-50 py-6 px-3 sm:px-6 lg:px-8 text-gray-900">
@@ -239,7 +199,7 @@ export default function TrackDeliveryPage() {
           </div>
         </div>
 
-        {searched && shipment && (
+        {searched && shipment && activeDelivery &&  (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Left Column: Live Status & Map Simulation */}
             <div className="lg:col-span-7 space-y-6">
@@ -259,7 +219,7 @@ export default function TrackDeliveryPage() {
                     </span>
 
                     <span className="bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-xs font-bold">
-                      🛵 {shipment.status}
+                      🛵 {activeDelivery.status}
                     </span>
                   </div>
                 </div>
@@ -299,7 +259,7 @@ export default function TrackDeliveryPage() {
                       </span>
 
                       <span className="text-sm font-bold text-gray-900">
-                        Mardan → Chakdara → Timergara
+                        {shipment.origin} → {shipment.destination}
                       </span>
                     </div>
 
@@ -386,7 +346,7 @@ export default function TrackDeliveryPage() {
                     </p>
 
                     <p className="text-sm font-black text-indigo-900 mt-1">
-                      In Transit
+                      {activeDelivery.status}
                     </p>
                   </div>
 
@@ -430,11 +390,11 @@ export default function TrackDeliveryPage() {
                     {/* Rider Details */}
                     <div className="flex-1">
                       <p className="text-sm font-black text-gray-900">
-                        Hamza Malik
+                        {shipment.rider}
                       </p>
 
                       <p className="text-xs text-gray-500 mt-1">
-                        🛵 Motorbike Unit #07
+                        🛵 {shipment.riderUnit}
                       </p>
 
                       <p className="text-xs text-gray-500 mt-1">
@@ -471,29 +431,49 @@ export default function TrackDeliveryPage() {
                 </h3>
 
                 <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-gray-100 pl-2">
-                  {shipment.progressSteps.map((step, index) => (
-                    <div
-                      key={index}
-                      className="relative flex items-start gap-4"
-                    >
-                      <span
-                        className={`size-3 rounded-full mt-1 shrink-0 z-10 ring-4 ring-white ${
-                          step.completed ? "bg-emerald-500" : "bg-gray-200"
-                        }`}
-                      ></span>
-                      <div>
-                        <p
-                          className={`text-xs font-bold ${step.completed ? "text-gray-900" : "text-gray-400"}`}
+                  {trackingSteps.map((step, index) => {
+                    const completed = index <= currentStepIndex;
+                    const current = index === currentStepIndex;
+
+                    return (
+                      <div
+                        key={step.status}
+                        className="relative flex items-center gap-4"
+                      >
+                        {/* Circle */}
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full font-bold text-xs z-10 ${
+                            completed
+                              ? "bg-green-600 text-white"
+                              : "bg-gray-200 text-gray-500"
+                          }`}
                         >
-                          {step.title}
-                        </p>
-                        <p className="text-[11px] text-indigo-600 font-medium">
-                          {step.location}
-                        </p>
-                        <p className="text-[10px] text-gray-400">{step.time}</p>
+                          {index + 1}
+                        </div>
+
+                        {/* Label */}
+                        <div>
+                          <p
+                            className={`text-sm font-semibold ${
+                              current
+                                ? "text-green-600"
+                                : completed
+                                  ? "text-gray-700"
+                                  : "text-gray-400"
+                            }`}
+                          >
+                            {step.label}
+                          </p>
+
+                          {current && (
+                            <p className="text-xs text-gray-500">
+                              Current delivery status
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 

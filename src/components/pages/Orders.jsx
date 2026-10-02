@@ -1,69 +1,18 @@
 import React, { useState } from "react";
+import useOrders from "../../hooks/useOrders";
+import { ORDER_STATUS } from "../../utils/constants";
+import { DELIVERY_PRIORITY } from "../../utils/constants";
+import { useAuth } from "../../context/AuthContext";
+import {
+  canCreateOrder,
+  canEditOrder,
+  canAssignRider,
+  canCancelOrder,
+} from "../../utils/permissions";
 
 export default function OrdersPage() {
-  // Working state for orders table with filtering and search capabilities
-  const [orders, setOrders] = useState([
-    {
-      id: "DL001",
-      initials: "AK",
-      customer: "Ali Khan",
-      customerPhone: "0312-1111111",
-      rider: "Hamza",
-      pickupAddress: "GT Road, Mardan",
-      deliveryAddress: "Timergara Bazaar",
-      packageDetails: "Electronics, fragile",
-      priority: "EXPRESS",
-      paymentMethod: "CASH",
-      route: "Mardan → Timergara",
-      status: "IN TRANSIT",
-      date: "2024-10-24",
-    },
-    {
-      id: "DL002",
-      initials: "AH",
-      customer: "Ahmed",
-      customerPhone: "0333-2222222",
-      rider: "Billal",
-      pickupAddress: "Saddar, Mardan",
-      deliveryAddress: "Dir City Center",
-      packageDetails: "Clothing, 3kg",
-      priority: "STANDARD",
-      paymentMethod: "EASYPAISA",
-      route: "Mardan → Dir",
-      status: "DELIVERED",
-      date: "2024-10-24",
-    },
-    {
-      id: "DL003",
-      initials: "SA",
-      customer: "Sara",
-      customerPhone: "0300-3333333",
-      rider: "Not Assigned",
-      pickupAddress: "Mingora, Swat",
-      deliveryAddress: "Cantt, Mardan",
-      packageDetails: "Documents",
-      priority: "URGENT",
-      paymentMethod: "JAZZCASH",
-      route: "Swat → Mardan",
-      status: "PENDING",
-      date: "2024-10-24",
-    },
-    {
-      id: "DL004",
-      initials: "US",
-      customer: "Usman",
-      customerPhone: "0345-4444444",
-      rider: "Hamza",
-      pickupAddress: "University Road, Peshawar",
-      deliveryAddress: "GT Road, Mardan",
-      packageDetails: "Books, 2kg",
-      priority: "STANDARD",
-      paymentMethod: "CASH",
-      route: "Peshawar → Mardan",
-      status: "DELIVERED",
-      date: "2024-10-24",
-    },
-  ]);
+  const { role } = useAuth();
+  const { orders, setOrders, loading, error, fetchOrders } = useOrders();
   const [modalTab, setModalTab] = useState("view"); // 'view' | 'edit' | 'assign'
   const [editForm, setEditForm] = useState({});
   const availableRiders = ["Hamza", "Billal", "Tariq", "Zubair"];
@@ -73,6 +22,7 @@ export default function OrdersPage() {
   const [dateFilter, setDateFilter] = useState("");
   const [activeModal, setActiveModal] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [riderFilter, setRiderFilter] = useState("");
 
   const [createForm, setCreateForm] = useState({
     customer: "",
@@ -87,20 +37,23 @@ export default function OrdersPage() {
 
   // Filtered orders logic
   const filteredOrders = orders.filter((order) => {
-    // Search by Order ID, Customer Name, or Rider Name
+    // Search by Order ID or Customer
+    const search = searchQuery.toLowerCase();
+
     const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.rider.toLowerCase().includes(searchQuery.toLowerCase());
+      (order.orderId || "").toLowerCase().includes(search) ||
+      (order.customer || "").toLowerCase().includes(search);
 
-    // Filter by Status
-    const matchesStatus =
-      statusFilter === "ALL" || order.status === statusFilter;
+    // Status filter
+    const matchesStatus = !statusFilter || order.status === statusFilter;
 
-    // Filter by Date
-    const matchesDate = dateFilter === "" || order.date === dateFilter;
+    // Rider filter
+    const matchesRider = !riderFilter || order.rider === riderFilter;
 
-    return matchesSearch && matchesStatus && matchesDate;
+    // Date filter
+    const matchesDate = !dateFilter || order.date === dateFilter;
+
+    return matchesSearch && matchesStatus && matchesRider && matchesDate;
   });
 
   const handleCreateOrder = () => {
@@ -218,8 +171,8 @@ export default function OrdersPage() {
       ...selectedOrder,
       rider: selectedRider,
       status:
-        selectedOrder.status === "PENDING"
-          ? "IN TRANSIT"
+        selectedOrder.status === ORDER_STATUS.PENDING
+          ? ORDER_STATUS.IN_TRANSIT
           : selectedOrder.status,
     };
     setOrders(orders.map((o) => (o.id === updated.id ? updated : o)));
@@ -240,7 +193,7 @@ export default function OrdersPage() {
 
     const updatedOrder = {
       ...order,
-      status: "CANCELLED",
+      status: ORDER_STATUS.CANCELLED,
     };
 
     setOrders((prevOrders) =>
@@ -250,6 +203,15 @@ export default function OrdersPage() {
     setSelectedOrder(updatedOrder);
     setModalTab("view");
   };
+
+  if (loading) {
+    return <div className="p-6 text-center">Loading orders...</div>;
+  }
+
+  if (error) {
+    return <div className="p-6 text-center text-red-500">{error}</div>;
+  }
+
   return (
     <div className="min-h-screen bg-indigo-50 py-6 px-3 sm:px-6 lg:px-8 text-gray-900">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -284,13 +246,14 @@ export default function OrdersPage() {
                 <span className="font-bold text-amber-600">1 Unassigned</span>
               </div>
             </div>
-
-            <button
-              onClick={handleCreateOrder}
-              className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
-            >
-              + Create Order
-            </button>
+            {canCreateOrder(role) && (
+              <button
+                onClick={handleCreateOrder}
+                className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-sm transition-colors"
+              >
+                + Create Order
+              </button>
+            )}
           </div>
         </div>
 
@@ -348,7 +311,7 @@ export default function OrdersPage() {
         </div>
 
         {/* Search and Filters Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
+        {/* <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
           <div className="relative w-full sm:w-80">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
               🔍
@@ -387,8 +350,101 @@ export default function OrdersPage() {
               📥 Export
             </button>
           </div>
-        </div>
+        </div> */}
+        <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {/* Search */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Search
+              </label>
 
+              <input
+                type="text"
+                placeholder="Order ID or customer..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
+              />
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Status
+              </label>
+
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-indigo-500"
+              >
+                <option value="">All Statuses</option>
+                <option value="PENDING">Pending</option>
+                <option value="ASSIGNED">Assigned</option>
+                <option value="ACCEPTED">Accepted</option>
+                <option value="PICKED UP">Picked Up</option>
+                <option value="IN TRANSIT">In Transit</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+
+            {/* Rider */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Rider
+              </label>
+
+              <select
+                value={riderFilter}
+                onChange={(e) => setRiderFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-indigo-500"
+              >
+                <option value="">All Riders</option>
+
+                {[
+                  ...new Set(
+                    orders.map((order) => order.rider).filter(Boolean),
+                  ),
+                ].map((rider) => (
+                  <option key={rider} value={rider}>
+                    {rider}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Date
+              </label>
+
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 outline-none focus:border-indigo-500"
+              />
+            </div>
+          </div>
+
+          {/* Clear Filters */}
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => {
+                setSearchQuery("");
+                setStatusFilter("");
+                setRiderFilter("");
+                setDateFilter("");
+              }}
+              className="rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
         {/* Orders Table Container */}
         <div className="bg-white rounded-3xl p-4 sm:p-6 border border-gray-100 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
@@ -408,11 +464,11 @@ export default function OrdersPage() {
                 {filteredOrders.length > 0 ? (
                   filteredOrders.map((order) => (
                     <tr
-                      key={order.id}
+                      key={order.orderId}
                       className="hover:bg-slate-50/50 transition-colors"
                     >
                       <td className="py-3.5 font-semibold text-gray-900">
-                        {order.id}
+                        {order.orderId}
                       </td>
                       <td className="py-3.5 flex items-center gap-2">
                         <span className="size-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-[10px] shrink-0">
@@ -434,18 +490,18 @@ export default function OrdersPage() {
                       <td className="py-3.5">
                         <span
                           className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                            order.status === "IN TRANSIT"
+                            order.status === ORDER_STATUS.IN_TRANSIT
                               ? "bg-blue-50 text-blue-700"
-                              : order.status === "DELIVERED"
+                              : order.status === ORDER_STATUS.DELIVERED
                                 ? "bg-emerald-50 text-emerald-700"
-                                : order.status === "CANCELLED"
+                                : order.status === ORDER_STATUS.CANCELLED
                                   ? "bg-red-50 text-red-700"
                                   : "bg-amber-50 text-amber-700"
                           }`}
                         >
-                          {order.status === "DELIVERED"
+                          {order.status === ORDER_STATUS.DELIVERED
                             ? "✓ "
-                            : order.status === "CANCELLED"
+                            : order.status === ORDER_STATUS.CANCELLED
                               ? "✕ "
                               : "• "}
                           {order.status}
@@ -465,8 +521,8 @@ export default function OrdersPage() {
                               </button>
 
                               {/* Cancel Button */}
-                              {order.status !== "CANCELLED" &&
-                                order.status !== "DELIVERED" && (
+                              {order.status !== ORDER_STATUS.CANCELLED &&
+                                order.status !== ORDER_STATUS.DELIVERED && (
                                   <button
                                     onClick={() => {
                                       setSelectedOrder(order);
@@ -811,11 +867,11 @@ export default function OrdersPage() {
                     </h3>
                     <span
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold mt-1 ${
-                        selectedOrder.status === "IN TRANSIT"
+                        selectedOrder.status === ORDER_STATUS.IN_TRANSIT
                           ? "bg-blue-50 text-blue-700"
-                          : selectedOrder.status === "DELIVERED"
+                          : selectedOrder.status === ORDER_STATUS.DELIVERED
                             ? "bg-emerald-50 text-emerald-700"
-                            : selectedOrder.status === "CANCELLED"
+                            : selectedOrder.status === ORDER_STATUS.CANCELLED
                               ? "bg-red-50 text-red-700"
                               : "bg-purple-50 text-purple-700"
                       }`}
@@ -879,20 +935,24 @@ export default function OrdersPage() {
                     </div>
                     {/* Actions */}
                     <div className="flex gap-2 pt-1">
-                      <button
-                        onClick={() => setModalTab("edit")}
-                        className="flex-1 text-xs font-semibold border border-gray-200 rounded-xl py-2 hover:bg-gray-50"
-                      >
-                        ✏️ Edit Order
-                      </button>
-                      <button
-                        onClick={() => setModalTab("assign")}
-                        className="flex-1 text-xs font-semibold border border-indigo-200 text-indigo-600 rounded-xl py-2 hover:bg-indigo-50"
-                      >
-                        🏍️ Assign Rider
-                      </button>
-                      {selectedOrder.status !== "CANCELLED" &&
-                        selectedOrder.status !== "DELIVERED" && (
+                      {canEditOrder(role) && (
+                        <button
+                          onClick={() => setModalTab("edit")}
+                          className="flex-1 text-xs font-semibold border border-gray-200 rounded-xl py-2 hover:bg-gray-50"
+                        >
+                          ✏️ Edit Order
+                        </button>
+                      )}
+                      {canAssignRider(role) && (
+                        <button
+                          onClick={() => setModalTab("assign")}
+                          className="flex-1 text-xs font-semibold border border-indigo-200 text-indigo-600 rounded-xl py-2 hover:bg-indigo-50"
+                        >
+                          🏍️ Assign Rider
+                        </button>
+                      )}
+                      {selectedOrder.status !== ORDER_STATUS.CANCELLED &&
+                        selectedOrder.status !== ORDER_STATUS.DELIVERED && (
                           <button
                             onClick={handleCancelOrder}
                             className="flex-1 text-xs font-semibold border border-red-200 text-red-500 rounded-xl py-2 hover:bg-red-50"
@@ -954,7 +1014,7 @@ export default function OrdersPage() {
                         Priority
                       </label>
                       <select
-                        value={editForm.priority || "STANDARD"}
+                        value={editForm.priority || DELIVERY_PRIORITY.STANDARD}
                         onChange={(e) =>
                           setEditForm({ ...editForm, priority: e.target.value })
                         }

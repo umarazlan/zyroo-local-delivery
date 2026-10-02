@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-
+import {ORDER_STATUS} from '../../utils/constants';
+import {DELIVERY_PRIORITY} from '../../utils/constants';
 export default function OrderDetailsPage() {
   // Working state for order details lookup and timeline interaction
   const [activeTab, setActiveTab] = useState('current');
@@ -84,8 +85,8 @@ export default function OrderDetailsPage() {
     },
   ];
 
-  const currentOrders = allOrders.filter(o => o.status === 'IN TRANSIT' || o.status === 'PENDING');
-  const previousOrders = allOrders.filter(o => o.status === 'DELIVERED' || o.status === 'CANCELLED');
+  const currentOrders = allOrders.filter(o => o.status === ORDER_STATUS.IN_TRANSIT || o.status === ORDER_STATUS.PENDING);
+  const previousOrders = allOrders.filter(o => o.status === ORDER_STATUS.DELIVERED || o.status === ORDER_STATUS.CANCELLED);
 
    return (
     <div className="min-h-screen bg-indigo-50 py-6 px-3 sm:px-6 lg:px-8 text-gray-900">
@@ -207,9 +208,9 @@ export default function OrderDetailsPage() {
                   <p className="text-[11px] text-gray-400 mt-0.5">{selectedOrder.date}</p>
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  selectedOrder.status === 'IN TRANSIT' ? 'bg-blue-50 text-blue-700' :
-                  selectedOrder.status === 'PENDING' ? 'bg-purple-50 text-purple-700' :
-                  selectedOrder.status === 'DELIVERED' ? 'bg-emerald-50 text-emerald-700' :
+                  selectedOrder.status === ORDER_STATUS.IN_TRANSIT ? 'bg-blue-50 text-blue-700' :
+                  selectedOrder.status === ORDER_STATUS.PENDING ? 'bg-purple-50 text-purple-700' :
+                  selectedOrder.status === ORDER_STATUS.DELIVERED ? 'bg-emerald-50 text-emerald-700' :
                   'bg-red-50 text-red-700'
                 }`}>
                   • {selectedOrder.status}
@@ -236,7 +237,7 @@ export default function OrderDetailsPage() {
               </div>
 
               {/* ETA Banner */}
-              {selectedOrder.status !== 'DELIVERED' && (
+              {selectedOrder.status !== ORDER_STATUS.DELIVERED && (
                 <div className="bg-indigo-50 border border-indigo-100 rounded-2xl px-4 py-3 mb-5 flex items-center gap-3">
                   <span className="text-lg">⏱️</span>
                   <div>
@@ -263,7 +264,7 @@ export default function OrderDetailsPage() {
                 ))}
               </div>
 
-              {selectedOrder.status === 'DELIVERED' && (
+              {selectedOrder.status === ORDER_STATUS.DELIVERED && (
                 <div className="mt-5 bg-emerald-50 border border-emerald-100 rounded-2xl p-3.5 flex items-center gap-3">
                   <span>✅</span>
                   <p className="text-xs font-bold text-emerald-700">Order successfully delivered and signed off.</p>

@@ -4,22 +4,139 @@ A modern, responsive, full-featured React application designed to streamline loc
 
 ## Features
 
-* **Interactive Multi-Page Routing**: Powered by `react-router-dom` with active tab navigation for seamless navigation across Home, Dashboard, Orders, Order Details, and Tracking.
+* **Mockaroo API integration**
+* **Centralized API/service layer**
+* **React Context state management**
+* **Role-based protected routes**
+* **Business/Rider/Customer permissions**
+* **Simulated real-time delivery status**
+* **Optimistic UI updates**
+* **Advanced order search**
+* **Status filtering**
+* **Rider filtering**
+* **Date filtering**
+* **Combined filters**
+* **Clear filters**
+* **Notification read/unread state**
+* **Active delivery tracking**
+* **Google Maps delivery tracking**
+---
+### New Architecture
+```bash
+src/
+├── api/
+│   └── apiClient.js
+├── components/
+├── pages/
+├── layouts/
+├── services/
+│   ├── orderService.js
+│   ├── userService.js
+│   ├── riderService.js
+│   ├── deliveryService.js
+│   └── notificationService.js
+├── context/
+│   ├── AuthContext.jsx
+│   └── AppContext.jsx
+├── hooks/
+│   ├── useOrders.js
+│   ├── useDeliveries.js
+│   └── useNotifications.js
+└── utils/
+    ├── constants.js
+    ├── helpers.js
+    └── permissions.js
+    
+```
+## 𝗔𝗣𝗜 𝗦𝗲𝘁𝘂𝗽
 
-* **Live Dashboard Metrics**: Summary cards tracking total orders, pending assignments, active couriers, and on-time delivery percentages.
+Mockaroo is used as the mock REST data source for:
 
-* **Comprehensive Order Management**: Search orders by Order ID, customer name, or rider name, filter orders by status and date, view detailed order information, and assign couriers instantly.
+* **Orders**
+* **Notifications**
+* **Deliveries**
+* **Users**
+* **Riders**
 
-* **Granular Order Details & Telemetry**: Deep-dive tracking into customer information, delivery routes, rider information, and order status timelines.
-
-* **Live GPS Tracking**: Consignment tracking simulation featuring route progress, rider telemetry, pickup and delivery locations, and checkpoint history.
-
-* **Notifications**: Notification system for important delivery events such as new orders, rider assignments, order acceptance, pickup, delivery start, and delivery completion.
-
-* **Responsive Layout**: Designed with Tailwind CSS for optimized viewing across smartphones, tablets, and desktop workstations.
+API URLs are configured through Vite environment variables.
 
 ---
 
+## State Management
+
+React Context is used for shared application state.
+
+AuthContext manages:
+
+* **Authenticated user**
+* **User role**
+* **Login/logout**
+
+AppContext manages:
+
+* **Orders**
+* **Active delivery**
+* **Notifications**
+* **Loading states**
+* **API errors**
+* **Delivery status updates**
+
+---
+
+## Real-Time Updates
+
+The application currently uses a simulated real-time mechanism.
+
+Orders marked for simulation automatically progress through:
+
+```bash
+ASSIGNED
+   ↓
+ACCEPTED
+   ↓
+PICKED UP
+   ↓
+IN TRANSIT
+   ↓
+DELIVERED
+```
+The status is updated periodically without requiring a page refresh.
+
+## Optimistic UI
+
+The interface updates immediately for:
+
+* **Accept delivery**
+* **Update delivery status**
+* **Mark notification as read**
+
+If the API operation fails, the previous state is restored.
+
+## Advanced Order Search & Filtering
+
+Orders can be filtered by:
+
+* **Order ID**
+* **Customer**
+* **Status**
+* **Rider**
+* **Date**
+
+Multiple filters can be applied simultaneously.
+
+A Clear Filters action resets all filters.
+
+## Environment Variables
+
+Create .env:
+```bash
+VITE_ORDERS_API_URL=
+VITE_NOTIFICATIONS_API_URL=
+VITE_DELIVERIES_API_URL=
+VITE_USERS_API_URL=
+VITE_RIDERS_API_URL=
+VITE_GOOGLE_MAPS_API_KEY=
+```
 ## Tech Stack
 
 * **Frontend Framework**: React
