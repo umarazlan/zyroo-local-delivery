@@ -178,9 +178,3 @@ Umar Azlan
 
 Built with React, Tailwind CSS, and modern frontend development practices.
 
-```bash 
-
-One small improvement I made is changing **"real-time dispatch operations"** to **"dispatch operations"**, because your current project is primarily a simulated/local delivery management platform rather than a backend-connected real-time logistics system.
-
-Available next action: :contentReference[oaicite:0]{index=0}
-```
