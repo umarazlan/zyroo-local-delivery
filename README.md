@@ -172,6 +172,10 @@ cd zyroo-local-delivery
 npm run dev
 ```
 
+### Live Preview
+```bash
+https://zyr0riding.netlify.app/
+```
 Author
 
 Umar Azlan
